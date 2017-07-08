@@ -1,78 +1,83 @@
+function sudoku(matrix) {
+
+	return sudokuSolver(matrix, 0, 0)
+}
+
 function sudokuSolver(matrix, r, c) {
-	//completed
-	// console.log(matrix)
-	if(c > 8) {
-		r = r + 1
+
+	//base case
+	if(r > 8 || c > 8){
+		return false;
+	}
+	if(c === 8) {
+		r += 1;
 		c = 0;
 	}
-	if(!checkRow(matrix, r)) {
-		return;
-	} else if(!checkCol(matrix, c)) {
 
-		return;
-	} else if(!checkBox(matrix, r, c)) {
+	//get empty square(have this function finish first so that iterations aren't nested)
 
-		return;
-	}
-
-	// console.log(' r ' + r + ' c' + c )
-
-	if(r > 8) {
-		return
-	}
-
-
-	if(r === 8 && c ===8) {
-		console.log(matrix)
-		return matrix;
-	}
-
-
-
-	if(matrix[r][c] === 0) {
-		for(var i = 1; i <= 9; i++) {
-			matrix[r][c] = i
-			var newArray = matrix.map((arr) => arr.slice())
-			sudokuSolver(Array.from(newArray), r, c+1)
-		}
-	} else {
+	let getFirstEmptyBox = getEmptyIndex(matrix)
+	if(getFirstEmptyBox === undefined) {
+		//if no additional empty boxes are found, that means that we completed the sudoku solver
+		//return the finished sudoku
 		var newArray = matrix.map((arr) => arr.slice())
-		sudokuSolver(Array.from(newArray), r, c+1)
+		return newArray;
+	}
+	let currRow = getFirstEmptyBox[0];
+	let currCol = getFirstEmptyBox[1];
+
+	//get a number that is not contained in it's row, col, nor 3 by 3 subMatrix
+	let getNums = getPossibleNumber(matrix, currRow, currCol)
+
+
+	//set the firstEmptyBox to the possible number;
+	for(let i = 0; i < getNums.length; i++ ){
+		matrix[currRow][currCol] = getNums[i]
+		var newArray = matrix.map((arr) => arr.slice())
+		let solved = sudokuSolver(newArray, r, c+1)
+		//put a checker to return the solved sodoku if the solved returns true;
+		if(solved) {
+			return solved;
+		}
 	}
 }
 
-function checkRow(matrix, r) {
-	var obj = {};
-	for(var i = 0; i < matrix.length; i++) {
-		var matrixVal = matrix[r][i]
-		if(matrix[r][i] !== 0) {
-			if(!obj[matrixVal]) {
-				obj[matrixVal] = 1;
-			} else {
-				return false;
+//returns the first instance of empty box
+function getEmptyIndex(matrix){
+	for (let row = 0; row < matrix.length; row++) {
+		for (let col = 0; col < matrix[row].length; col++) {
+			if(matrix[row][col] === 0) {
+				return [row, col]
 			}
 		}
 	}
-	// console.log('obj', obj)
-	return true;
 }
 
-function checkCol(matrix, c) {
-	var obj = {};
-	for(var i = 0; i < matrix.length; i++) {
-		var matrixVal = matrix[i][c]
-		if(matrix[i][c] !== 0) {
-			if(!obj[matrixVal]) {
-				obj[matrixVal] = 1;
-			} else {
-				return false;
+function getPossibleNumber(matrix, currRow, currCol) {
+	let possibleSolutions = [];
+	//create 3 different sets for rows, columns, and 3 x 3 matrix;
+	let rowSet = new Set();
+	let colSet = new Set();
+	let subMatrix = checkBox(matrix, currRow, currCol)
+	for(let row = 0; row < matrix.length; row++) {
+		for(let col = 0; col < matrix[row].length; col++) {
+			if(matrix[currRow][col] !== 0 && matrix[row][currCol] !== 0) {
+				rowSet.add(matrix[currRow][col]);
+				colSet.add(matrix[row][currCol]);
 			}
 		}
 	}
-	// console.log(obj)
-	return true;
+
+	//find unique set of numbers that we pull from based on cross referencing row, col, 3 x 3 sets
+	for(var i = 1; i <= 9; i++) {
+		if(!rowSet.has(i) && !colSet.has(i) && !subMatrix.has(i)) {
+			possibleSolutions.push(i);
+		}
+	}
+	return possibleSolutions;
 }
 
+//checks the 3 x 3 matrix
 function checkBox(matrix, r, c) {
 	if(0 <= r && r <= 2) {
 		row = [0, 2]
@@ -89,81 +94,91 @@ function checkBox(matrix, r, c) {
 	} else if(6 <= c && c <= 8) {
 		col = [6, 8]
 	}
-	// console.log(row + " " + col)
-	var obj = {};
+	var subMatrix = new Set();
 	for(var i = row[0]; i <= row[1]; i++) {
 		for(var j = col[0]; j <= col[1]; j++) {
-			var matrixVal = matrix[i][j]
 			if(matrix[i][j] !== 0) {
-				if(!obj[matrixVal]) {
-					obj[matrixVal] = 1;
-				} else {
-					return false;
-				}
+				subMatrix.add(matrix[i][j])
 			}
 		}
 	}
-	// console.log('obj', obj)
+	return subMatrix;
+}
+
+
+
+
+////////////////////////////////////////////////////////////////////////
+//TESTS
+/////////////////////////////////////////////////////////////////////////
+
+var arr2 = [
+	[ 5, 6, 7, 0, 1, 0, 0, 0, 0],
+	[ 3, 0, 0, 0, 0, 0, 0, 7, 0],
+	[ 9, 0, 0, 0, 0, 0, 0, 0, 5],
+	[ 0, 0, 0, 0, 0, 2, 0, 5, 0],
+	[ 0, 0, 2, 0, 0, 1, 9, 0, 0],
+	[ 7, 9, 6, 5, 3, 0, 0, 0, 4],
+	[ 0, 1, 0, 7, 0, 0, 0, 0, 0],
+	[ 6, 0, 0, 0, 2, 0, 1, 3, 0],
+	[ 2, 0, 0, 0, 0, 0, 0, 0, 9],
+]
+
+
+var arr1 = [
+	[ 0, 0, 8, 0, 0, 6, 1, 3, 0],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0],
+	[ 4, 0, 0, 0, 3, 0, 0, 7, 0],
+	[ 1, 0, 0, 3, 0, 0, 6, 0, 0],
+	[ 0, 2, 0, 4, 0, 0, 0, 8, 0],
+	[ 0, 0, 0, 6, 0, 1, 0, 5, 0],
+	[ 5, 7, 0, 8, 0, 0, 0, 0, 0],
+	[ 0, 0, 3, 0, 0, 0, 0, 4, 0],
+	[ 6, 8, 1, 0, 0, 0, 0, 0, 0],
+]
+
+var arr1Solution = [
+	[ 9, 5, 8, 2, 7, 6, 1, 3, 4 ],
+  [ 3, 1, 7, 5, 9, 4, 2, 6, 8 ],
+  [ 4, 6, 2, 1, 3, 8, 5, 7, 9 ],
+  [ 1, 4, 5, 3, 8, 7, 6, 9, 2 ],
+  [ 7, 2, 6, 4, 5, 9, 3, 8, 1 ],
+  [ 8, 3, 9, 6, 2, 1, 4, 5, 7 ],
+  [ 5, 7, 4, 8, 6, 2, 9, 1, 3 ],
+  [ 2, 9, 3, 7, 1, 5, 8, 4, 6 ],
+  [ 6, 8, 1, 9, 4, 3, 7, 2, 5 ] ]
+
+
+var arr2Solution = [
+	[ 5, 6, 7, 2, 1, 4, 3, 9, 8 ],
+  [ 3, 2, 4, 9, 8, 5, 6, 7, 1 ],
+  [ 9, 8, 1, 3, 6, 7, 4, 2, 5 ],
+  [ 1, 3, 8, 4, 9, 2, 7, 5, 6 ],
+  [ 4, 5, 2, 6, 7, 1, 9, 8, 3 ],
+  [ 7, 9, 6, 5, 3, 8, 2, 1, 4 ],
+  [ 8, 1, 9, 7, 4, 3, 5, 6, 2 ],
+  [ 6, 4, 5, 8, 2, 9, 1, 3, 7 ],
+  [ 2, 7, 3, 1, 5, 6, 8, 4, 9 ] ]
+
+
+console.log('test1: ', solutionChecker(sudoku(arr1), arr1Solution))
+console.log('test2: ', solutionChecker(sudoku(arr2), arr2Solution))
+
+
+
+////////////////////////////////////////////////////////////////
+//solution Checker//
+////////////////////////////////////////////////////////////////
+
+function solutionChecker(matrix1, matrix2){
+	for(var i = 0; i < matrix1.length; i++) {
+		for(var j = 0; j < matrix1.length; j++) {
+			if(matrix1[i][j] !== matrix2[i][j]) {
+				return false;
+			}
+		}
+	}
 	return true;
 }
 
-// var arr = [
-// 	[ 5,  3,  0,  0,  7,  0,  0,  0,  0],
-// 	[ 6,  0,  0,  1,  9,  5,  0,  0,  0],
-// 	[ 0,  9,  8,  0,  0,  0,  0,  6,  0],
-// 	[ 8,  0,  0,  0,  6,  0,  0,  0,  3],
-// 	[ 4,  0,  0,  8,  0,  3,  0,  0,  1],
-// 	[ 7,  0,  0,  0,  2,  0,  0,  0,  6],
-// 	[ 0,  6,  0,  0,  0,  0,  2,  8,  0],
-// 	[ 0,  0,  0,  4,  1,  9,  0,  0,  5],
-// 	[ 0,  0,  0,  0,  8,  0,  0,  7,  9]
-// ]
-
-// var arr = [
-// 	[ 6,  1,  0,  0,  2,  0,  0,  3,  7],
-// 	[ 0,  3,  5,  0,  0,  6,  8,  0,  1],
-// 	[ 0,  0,  0,  0,  4,  0,  6,  0,  2],
-// 	[ 8,  0,  9,  0,  1,  3,  2,  7,  4],
-// 	[ 0,  7,  0,  9,  0,  0,  0,  8,  0],
-// 	[ 0,  6,  0,  0,  7,  4,  1,  9,  5],
-// 	[ 1,  0,  3,  4,  0,  7,  5,  2,  9],
-// 	[ 5,  2,  0,  1,  8,  0,  0,  0,  3],
-// 	[ 9,  4,  6,  2,  3,  5,  0,  0,  8]
-// ]
-// var arr = [
-// 	[ 0,  0,  0,  0,  0,  0,  0,  0,  0],
-// 	[ 0,  0,  0,  0,  0,  0,  0,  0,  0],
-// 	[ 0,  0,  0,  0,  0,  0,  0,  0,  0],
-// 	[ 0,  0,  0,  0,  0,  0,  0,  0,  0],
-// 	[ 0,  0,  0,  0,  0,  0,  0,  0,  0],
-// 	[ 0,  0,  0,  0,  0,  0,  0,  0,  0],
-// 	[ 0,  0,  0,  0,  0,  0,  0,  0,  0],
-// 	[ 0,  0,  0,  0,  0,  0,  0,  0,  0],
-// 	[ 0,  0,  0,  0,  0,  0,  0,  0,  0],
-// ]
-
-var arr = [
-	[ 7,  0,  0,  0,  0,  0,  5,  8,  0],
-	[ 0,  0,  0,  0,  2,  0,  0,  0,  9],
-	[ 0,  0,  0,  0,  0,  8,  3,  0,  1],
-	[ 0,  5,  2,  0,  6,  9,  7,  0,  4],
-	[ 1,  9,  7,  0,  0,  0,  0,  0,  0],
-	[ 0,  0,  0,  5,  0,  0,  0,  0,  8],
-	[ 0,  0,  8,  0,  0,  0,  0,  9,  3],
-	[ 0,  6,  0,  0,  0,  0,  0,  2,  0],
-	[ 0,  7,  0,  0,  0,  0,  6,  0,  5],
-]
-
-console.log(sudokuSolver(arr, 0, 0))
-
-/*
-	[ 5,  3,  0,  0,  7,  0,  0,  0,  0],
-	[ 6,  0,  0,  1,  9,  5,  0,  0,  0],
-	[-1,  9,  8,  0,  0,  0,  0,  6,  0],
-	[ 8,  0,  0,  0,  6,  0,  0,  0,  3],
-	[ 4,  0,  0,  8,  0,  3,  0,  0,  1],
-	[ 7,  0,  0,  0,  2,  0,  0,  0,  6],
-	[ 0,  6,  0,  0,  0,  0,  2,  8,  0],
-	[ 0,  0,  0,  4,  1,  9,  0,  0,  5],
-	[ 0,  0,  0,  0,  8,  0,  0,  7,  9],
-*/
+////////////////////////////////////////////////////////////////
